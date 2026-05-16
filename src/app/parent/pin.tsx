@@ -1,21 +1,34 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PinPad } from '@/components/PinPad';
 import { Screen } from '@/components/Screen';
 import { colors, spacing } from '@/constants/theme';
+import { useStoreHydration } from '@/hooks/useStoreHydration';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function ParentPinScreen() {
-  const hasPin = useAppStore((s) => s.hasPin);
+  const hydrated = useStoreHydration();
+  const parentPin = useAppStore((s) => s.parentPin);
   const verifyPin = useAppStore((s) => s.verifyPin);
   const [pin, setPin] = useState('');
 
-  if (!hasPin()) {
-    router.replace('/parent/setup-pin');
-    return null;
+  useEffect(() => {
+    if (hydrated && !parentPin) {
+      router.replace('/parent/setup-pin');
+    }
+  }, [hydrated, parentPin]);
+
+  if (!hydrated) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={colors.accent} size="large" />
+      </View>
+    );
   }
+
+  if (!parentPin) return null;
 
   return (
     <Screen scroll={false}>
@@ -43,6 +56,12 @@ export default function ParentPinScreen() {
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cancel: {
     marginTop: spacing.xl,
     alignItems: 'center',

@@ -46,13 +46,16 @@ export function Screen({
           {body}
         </ScrollView>
       ) : (
-        body
+        <View style={styles.fill}>{body}</View>
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
   safe: {
     flex: 1,
     backgroundColor: colors.background,

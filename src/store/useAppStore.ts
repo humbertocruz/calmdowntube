@@ -18,9 +18,7 @@ type AppState = {
   parentPin: string | null;
   profiles: ChildProfile[];
   activeProfileId: string | null;
-  hydrated: boolean;
 
-  setHydrated: (value: boolean) => void;
   setParentPin: (pin: string) => void;
   verifyPin: (pin: string) => boolean;
   hasPin: () => boolean;
@@ -47,9 +45,6 @@ export const useAppStore = create<AppState>()(
       parentPin: null,
       profiles: [DEFAULT_PROFILE],
       activeProfileId: null,
-      hydrated: false,
-
-      setHydrated: (value) => set({ hydrated: value }),
 
       setParentPin: (pin) => set({ parentPin: pin }),
 
@@ -129,8 +124,10 @@ export const useAppStore = create<AppState>()(
         profiles: state.profiles,
         activeProfileId: state.activeProfileId,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true);
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) {
+          console.warn('[CalmDownTube] Failed to load saved data:', error);
+        }
       },
     },
   ),

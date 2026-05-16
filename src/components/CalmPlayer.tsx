@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
 
 type CalmPlayerProps = {
@@ -7,6 +7,9 @@ type CalmPlayerProps = {
   maxVolume: number;
   playing: boolean;
   onPlayingChange?: (playing: boolean) => void;
+  width: number;
+  height: number;
+  style?: ViewStyle;
 };
 
 export function CalmPlayer({
@@ -14,9 +17,16 @@ export function CalmPlayer({
   maxVolume,
   playing,
   onPlayingChange,
+  width,
+  height,
+  style,
 }: CalmPlayerProps) {
   const playerRef = useRef<YoutubeIframeRef>(null);
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setReady(false);
+  }, [youtubeId]);
 
   const onStateChange = useCallback(
     (state: string) => {
@@ -27,11 +37,11 @@ export function CalmPlayer({
   );
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { width, height }, style]}>
       <YoutubePlayer
         ref={playerRef}
-        height={220}
-        width="100%"
+        height={height}
+        width={width}
         play={playing}
         videoId={youtubeId}
         volume={maxVolume}
@@ -57,8 +67,7 @@ export function CalmPlayer({
 
 const styles = StyleSheet.create({
   wrap: {
-    width: '100%',
-    borderRadius: 14,
     overflow: 'hidden',
+    backgroundColor: '#000',
   },
 });
