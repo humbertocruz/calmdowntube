@@ -23,7 +23,12 @@ import { getVideo, resolveYoutubeId } from '@/constants/content';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useFilteredContent } from '@/hooks/useFilteredContent';
 import { useAppStore } from '@/store/useAppStore';
+import type { VideoItem } from '@/types';
 import { lockPortrait, unlockOrientation } from '@/utils/screenOrientation';
+import {
+  findVideoByYoutubeId,
+  suggestedVideoItem,
+} from '@/utils/youtubeUrl';
 
 const SWIPE_THRESHOLD = 56;
 
@@ -40,6 +45,7 @@ export default function PlayerScreen() {
   const profile = useAppStore((s) => s.getActiveProfile());
   const blockVideo = useAppStore((s) => s.blockVideo);
   const verifyPin = useAppStore((s) => s.verifyPin);
+  const isVideoBlocked = useAppStore((s) => s.isVideoBlocked);
 
   const { getPlaylistVideos } = useFilteredContent();
   const playlistVideos = useMemo(
@@ -47,13 +53,20 @@ export default function PlayerScreen() {
     [playlistId, getPlaylistVideos],
   );
 
+  const [extraVideos, setExtraVideos] = useState<VideoItem[]>([]);
+
+  const queue = useMemo(
+    () => [...playlistVideos, ...extraVideos],
+    [playlistVideos, extraVideos],
+  );
+
   const initialIndex = useMemo(() => {
-    if (!videoId || playlistVideos.length === 0) return 0;
+    if (!videoId || queue.length === 0) return 0;
     const fromParam = index ? Number(index) : -1;
-    if (fromParam >= 0 && fromParam < playlistVideos.length) return fromParam;
-    const found = playlistVideos.findIndex((v) => v.id === videoId);
+    if (fromParam >= 0 && fromParam < queue.length) return fromParam;
+    const found = queue.findIndex((v) => v.id === videoId);
     return found >= 0 ? found : 0;
-  }, [videoId, index, playlistVideos]);
+  }, [videoId, index, queue]);
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [playing, setPlaying] = useState(true);
@@ -64,15 +77,20 @@ export default function PlayerScreen() {
   const navigating = useRef(false);
 
   const isDeviceLandscape = windowWidth > windowHeight;
+
   const fullscreen =
     parentStep === 'closed' &&
     (isDeviceLandscape ? !landscapeDismissed : portraitFullscreen);
 
-  const video = playlistVideos[currentIndex] ?? (videoId ? getVideo(videoId) : undefined);
+  const video = queue[currentIndex] ?? (videoId ? getVideo(videoId) : undefined);
   const youtubeId = video ? resolveYoutubeId(video) : undefined;
   const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex < playlistVideos.length - 1;
-  const showPlaylist = playlistVideos.length > 1;
+  const hasNext = currentIndex < queue.length - 1;
+  const showPlaylist = queue.length > 1;
+
+  useEffect(() => {
+    setExtraVideos([]);
+  }, [playlistId, videoId]);
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
@@ -114,7 +132,7 @@ export default function PlayerScreen() {
   const goToIndex = useCallback(
     (nextIndex: number) => {
       if (navigating.current) return;
-      if (nextIndex < 0 || nextIndex >= playlistVideos.length) return;
+      if (nextIndex < 0 || nextIndex >= queue.length) return;
       navigating.current = true;
       setCurrentIndex(nextIndex);
       setPlaying(true);
@@ -122,7 +140,38 @@ export default function PlayerScreen() {
         navigating.current = false;
       }, 400);
     },
-    [playlistVideos.length],
+    [queue.length],
+  );
+
+  const handleSuggestedVideoId = useCallback(
+    (ytId: string) => {
+      if (!profile || !video) return;
+
+      const existing = findVideoByYoutubeId(queue, ytId);
+      if (existing && isVideoBlocked(profile.id, existing.id)) {
+        return;
+      }
+      if (!existing && isVideoBlocked(profile.id, `yt-${ytId}`)) {
+        return;
+      }
+
+      const indexInQueue = queue.findIndex((v) => resolveYoutubeId(v) === ytId);
+      if (indexInQueue >= 0) {
+        goToIndex(indexInQueue);
+        return;
+      }
+
+      const item = suggestedVideoItem(ytId, video);
+      setExtraVideos((prev) => {
+        const nextIndex = playlistVideos.length + prev.length;
+        setTimeout(() => {
+          setCurrentIndex(nextIndex);
+          setPlaying(true);
+        }, 0);
+        return [...prev, item];
+      });
+    },
+    [profile, video, queue, playlistVideos.length, isVideoBlocked, goToIndex],
   );
 
   const goNext = useCallback(() => goToIndex(currentIndex + 1), [currentIndex, goToIndex]);
@@ -211,6 +260,7 @@ export default function PlayerScreen() {
         maxVolume={profile.maxVolume}
         playing={playing}
         onPlayingChange={setPlaying}
+        onSuggestedVideoId={handleSuggestedVideoId}
         onClose={closeFullscreen}
       />
 
@@ -230,6 +280,7 @@ export default function PlayerScreen() {
               maxVolume={profile.maxVolume}
               playing={playing && !fullscreen}
               onPlayingChange={setPlaying}
+              onSuggestedVideoId={handleSuggestedVideoId}
               width={playerWidth}
               height={playerHeight}
               style={styles.playerRounded}
@@ -241,6 +292,9 @@ export default function PlayerScreen() {
                 {hasPrev ? 'ou para o anterior' : ''}
               </Text>
             )}
+            <Text style={styles.swipeHintText}>
+              Gire o celular para tela cheia · volte ao retrato para sair
+            </Text>
           </View>
         </GestureDetector>
 
@@ -279,7 +333,7 @@ export default function PlayerScreen() {
           <View style={styles.playlistSection}>
             <Text style={styles.playlistTitle}>Nesta lista</Text>
             <View style={styles.playlistList}>
-              {playlistVideos.map((item, itemIndex) => {
+              {queue.map((item, itemIndex) => {
                 const isActive = itemIndex === currentIndex;
                 return (
                   <View

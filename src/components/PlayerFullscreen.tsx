@@ -10,8 +10,19 @@ type PlayerFullscreenProps = {
   maxVolume: number;
   playing: boolean;
   onPlayingChange: (playing: boolean) => void;
+  onSuggestedVideoId?: (youtubeVideoId: string) => void;
   onClose: () => void;
 };
+
+function fitPlayerToScreen(availW: number, availH: number) {
+  let width = availW;
+  let height = Math.round((width * 9) / 16);
+  if (height > availH) {
+    height = availH;
+    width = Math.round((height * 16) / 9);
+  }
+  return { width, height };
+}
 
 export function PlayerFullscreen({
   visible,
@@ -19,16 +30,16 @@ export function PlayerFullscreen({
   maxVolume,
   playing,
   onPlayingChange,
+  onSuggestedVideoId,
   onClose,
 }: PlayerFullscreenProps) {
-  const { width, height } = useWindowDimensions();
+  const { width: screenW, height: screenH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const isDeviceLandscape = width > height;
+  const isDeviceLandscape = screenW > screenH;
 
-  const playerWidth = isDeviceLandscape
-    ? width
-    : height - insets.top - insets.bottom;
-  const playerHeight = isDeviceLandscape ? height : width;
+  const availW = screenW;
+  const availH = screenH - insets.top - insets.bottom;
+  const { width: playerWidth, height: playerHeight } = fitPlayerToScreen(availW, availH);
 
   return (
     <Modal
@@ -38,21 +49,14 @@ export function PlayerFullscreen({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View
-          style={[
-            styles.playerWrap,
-            !isDeviceLandscape && {
-              width: playerWidth,
-              height: playerHeight,
-              transform: [{ rotate: '90deg' }],
-            },
-          ]}
-        >
+        <View style={styles.playerWrap}>
           <CalmPlayer
+            key={youtubeId}
             youtubeId={youtubeId}
             maxVolume={maxVolume}
             playing={playing}
             onPlayingChange={onPlayingChange}
+            onSuggestedVideoId={onSuggestedVideoId}
             width={playerWidth}
             height={playerHeight}
           />

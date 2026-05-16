@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
+
+import { resolveYoutubeEmbedNavigation } from '@/utils/youtubeUrl';
 
 type CalmPlayerProps = {
   youtubeId: string;
   maxVolume: number;
   playing: boolean;
   onPlayingChange?: (playing: boolean) => void;
+  /** Toque em sugestão do embed: abre o vídeo no app em vez do YouTube externo. */
+  onSuggestedVideoId?: (youtubeVideoId: string) => void;
   width: number;
   height: number;
   style?: ViewStyle;
@@ -17,6 +21,7 @@ export function CalmPlayer({
   maxVolume,
   playing,
   onPlayingChange,
+  onSuggestedVideoId,
   width,
   height,
   style,
@@ -32,8 +37,31 @@ export function CalmPlayer({
     (state: string) => {
       if (state === 'playing') onPlayingChange?.(true);
       if (state === 'paused' || state === 'ended') onPlayingChange?.(false);
+      if (state === 'ended') {
+        playerRef.current?.seekTo(0, true);
+      }
     },
     [onPlayingChange],
+  );
+
+  const onShouldStartLoadWithRequest = useCallback(
+    (request: { url?: string; mainDocumentURL?: string }) => {
+      const url = request.mainDocumentURL ?? request.url ?? '';
+      if (Platform.OS === 'ios' && url === 'about:blank') {
+        return true;
+      }
+
+      const nav = resolveYoutubeEmbedNavigation(url);
+      if (nav.type === 'video') {
+        onSuggestedVideoId?.(nav.youtubeVideoId);
+        return false;
+      }
+      if (nav.type === 'block') {
+        return false;
+      }
+      return true;
+    },
+    [onSuggestedVideoId],
   );
 
   return (
@@ -59,6 +87,7 @@ export function CalmPlayer({
         webViewProps={{
           allowsInlineMediaPlayback: true,
           mediaPlaybackRequiresUserAction: !ready,
+          onShouldStartLoadWithRequest,
         }}
       />
     </View>
