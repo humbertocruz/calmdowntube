@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/constants/theme';
@@ -10,6 +10,8 @@ type ScreenProps = {
   children: ReactNode;
   scroll?: boolean;
   headerRight?: ReactNode;
+  onBack?: () => void;
+  backLabel?: string;
   contentStyle?: ViewStyle;
 };
 
@@ -19,10 +21,17 @@ export function Screen({
   children,
   scroll = true,
   headerRight,
+  onBack,
+  backLabel = 'Voltar',
   contentStyle,
 }: ScreenProps) {
   const body = (
     <View style={[styles.content, contentStyle]}>
+      {onBack ? (
+        <Pressable onPress={onBack} style={styles.backBtn} hitSlop={8}>
+          <Text style={styles.backBtnText}>← {backLabel}</Text>
+        </Pressable>
+      ) : null}
       {(title || headerRight) && (
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
@@ -69,6 +78,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     gap: spacing.lg,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+  },
+  backBtnText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
   },
   headerRow: {
     flexDirection: 'row',

@@ -3,7 +3,7 @@
     "name": "CalmDownTube",
     "slug": "calmdowntube",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "calmdowntubes",
     "userInterfaceStyle": "dark",
@@ -25,6 +25,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "PORTRAIT"
+        }
+      ],
       [
         "expo-splash-screen",
         {

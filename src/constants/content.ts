@@ -1,7 +1,66 @@
 import type { Category, Playlist, VideoItem } from '@/types';
 
+/** Virtual playlist for the home feed tab (swipe between all curated videos). */
+export const FEED_PLAYLIST_ID = '__feed__';
+
+/** Curated home order: infantil primeiro, depois calma. Só IDs aprovados. */
+export const homeFeedVideoIds = [
+  'monica-1',
+  'bita-1',
+  'jacarelvis-1',
+  'lobato-1',
+  'monica-2',
+  'bita-2',
+  'jacarelvis-2',
+  'lobato-2',
+  'bita-3',
+  'jacarelvis-3',
+  'jacarelvis-4',
+  'aquarium-1',
+  'forest-1',
+  'ocean-1',
+  'space-1',
+  'draw-1',
+  'piano-1',
+];
+
 export const videos: Record<string, VideoItem> = {
-  // Turma da Mônica Oficial
+  'aquarium-1': {
+    id: 'aquarium-1',
+    title: 'Aquário tranquilo',
+    channelId: 'calm-nature',
+    channelTitle: 'Natureza calma',
+  },
+  'space-1': {
+    id: 'space-1',
+    title: 'Viagem lenta pelas estrelas',
+    channelId: 'calm-space',
+    channelTitle: 'Espaço calmo',
+  },
+  'forest-1': {
+    id: 'forest-1',
+    title: 'Ambiente de floresta',
+    channelId: 'calm-nature',
+    channelTitle: 'Natureza calma',
+  },
+  'ocean-1': {
+    id: 'ocean-1',
+    title: 'Ondas suaves do mar',
+    channelId: 'calm-nature',
+    channelTitle: 'Natureza calma',
+  },
+  'draw-1': {
+    id: 'draw-1',
+    title: 'Desenho devagar para crianças',
+    channelId: 'calm-create',
+    channelTitle: 'Criar & relaxar',
+  },
+  'piano-1': {
+    id: 'piano-1',
+    title: 'Piano suave para relaxar',
+    channelId: 'calm-sounds',
+    channelTitle: 'Sons calmos',
+  },
   'monica-1': {
     id: 'monica-1',
     title: 'Mônica? Que Mônica?',
@@ -14,7 +73,6 @@ export const videos: Record<string, VideoItem> = {
     channelId: 'turma-monica-oficial',
     channelTitle: 'Turma da Mônica Oficial',
   },
-  // Mundo Bita
   'bita-1': {
     id: 'bita-1',
     title: 'Sinto o que Sinto',
@@ -33,7 +91,6 @@ export const videos: Record<string, VideoItem> = {
     channelId: 'mundo-bita',
     channelTitle: 'Mundo Bita',
   },
-  // A Turma do Seu Lobato
   'lobato-1': {
     id: 'lobato-1',
     title: 'Palavrinhas Mágicas',
@@ -46,7 +103,6 @@ export const videos: Record<string, VideoItem> = {
     channelId: 'turma-seu-lobato',
     channelTitle: 'A Turma do Seu Lobato',
   },
-  // Jacarelvis
   'jacarelvis-1': {
     id: 'jacarelvis-1',
     title: 'Escovo os Dentes',
@@ -74,6 +130,12 @@ export const videos: Record<string, VideoItem> = {
 };
 
 export const youtubeIds: Record<string, string> = {
+  'aquarium-1': '1-iS7LArHPo',
+  'space-1': '86YLFOog4GM',
+  'forest-1': 'xNN7iTA57jM',
+  'ocean-1': '1ZYbU82GVz4',
+  'draw-1': '5y8A7A4HkKU',
+  'piano-1': 'nDq6TstdEi8',
   'monica-1': 'bDmfkZslsjY',
   'monica-2': 'Wfc9wVFm9qg',
   'bita-1': 'OEUXZ2uz1a4',
@@ -88,6 +150,27 @@ export const youtubeIds: Record<string, string> = {
 };
 
 export const playlists: Playlist[] = [
+  {
+    id: 'nature',
+    title: 'Natureza & calma',
+    description: 'Cenas lentas e tranquilas da natureza',
+    emoji: '🌿',
+    videoIds: ['aquarium-1', 'forest-1', 'ocean-1'],
+  },
+  {
+    id: 'space',
+    title: 'Espaço & descoberta',
+    description: 'Exploração suave, sem pressa',
+    emoji: '🪐',
+    videoIds: ['space-1'],
+  },
+  {
+    id: 'create',
+    title: 'Criar & ouvir',
+    description: 'Desenho e música suave',
+    emoji: '🎨',
+    videoIds: ['draw-1', 'piano-1'],
+  },
   {
     id: 'turma-monica-oficial',
     title: 'Turma da Mônica Oficial',
@@ -121,7 +204,7 @@ export const playlists: Playlist[] = [
 export const categories: Category[] = [
   {
     id: 'canais',
-    title: 'Canais',
+    title: 'Canais favoritos',
     emoji: '📺',
     playlistIds: [
       'turma-monica-oficial',
@@ -130,12 +213,24 @@ export const categories: Category[] = [
       'jacarelvis',
     ],
   },
+  {
+    id: 'calm',
+    title: 'Calma & exploração',
+    emoji: '✨',
+    playlistIds: ['nature', 'space', 'create'],
+  },
 ];
 
 export function getVideo(id: string): VideoItem | undefined {
   return videos[id];
 }
 
+export function resolveYoutubeId(video: VideoItem): string | undefined {
+  if (video.youtubeVideoId) return video.youtubeVideoId;
+  return youtubeIds[video.id];
+}
+
+/** @deprecated Use resolveYoutubeId(video) */
 export function getYoutubeId(internalId: string): string | undefined {
   return youtubeIds[internalId];
 }

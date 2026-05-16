@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getYoutubeId } from '@/constants/content';
+import { resolveYoutubeId } from '@/constants/content';
 import { colors, radius, spacing } from '@/constants/theme';
 import type { VideoItem } from '@/types';
 
@@ -12,10 +12,10 @@ type VideoCardProps = {
 };
 
 export function VideoCard({ video, onPress, compact }: VideoCardProps) {
-  const ytId = getYoutubeId(video.id);
-  const thumb = ytId
-    ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-    : undefined;
+  const ytId = resolveYoutubeId(video);
+  const thumb =
+    video.thumbnailUrl ??
+    (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : undefined);
 
   return (
     <Pressable

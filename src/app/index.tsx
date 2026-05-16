@@ -7,6 +7,7 @@ import { Screen } from '@/components/Screen';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useStoreHydration } from '@/hooks/useStoreHydration';
 import { useAppStore } from '@/store/useAppStore';
+import { lockPortrait } from '@/utils/screenOrientation';
 
 export default function HomeScreen() {
   const hydrated = useStoreHydration();
@@ -14,6 +15,10 @@ export default function HomeScreen() {
   const activeProfileId = useAppStore((s) => s.activeProfileId);
   const parentPin = useAppStore((s) => s.parentPin);
   const setActiveProfile = useAppStore((s) => s.setActiveProfile);
+
+  useEffect(() => {
+    lockPortrait();
+  }, []);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -24,7 +29,7 @@ export default function HomeScreen() {
 
   const onSelectProfile = (id: string) => {
     setActiveProfile(id);
-    router.push('/browse');
+    router.replace('/(child)');
   };
 
   if (!hydrated) {

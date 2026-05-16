@@ -29,7 +29,7 @@ export default function PlaylistScreen() {
       subtitle={playlist.description}
       headerRight={
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>Back</Text>
+          <Text style={styles.back}>Voltar</Text>
         </Pressable>
       }
     >
